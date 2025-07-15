@@ -1,0 +1,99 @@
+name: Deploy {{ service_name }}
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: {{ aws_region }}
+  LAMBDA_FUNCTION_NAME: {{ service_name }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    {% if include_eslint %}
+    - name: Lint code
+      run: npm run lint
+    {% endif %}{% if include_tests %}
+    - name: Run tests
+      run: npm test
+    {% endif %}
+    - name: Build TypeScript
+      run: npm run build
+    
+    - name: Package Lambda
+      run: npm run package
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: lambda-package
+        path: {{ service_name }}.zip
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: test
+    runs-on: ubuntu-latest
+    
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: lambda-package
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ aws_role_arn }}
+        aws-region: ${{ aws_region }}
+    
+    - name: Upload Lambda package to S3
+      run: |
+        BUCKET_NAME=$(aws ssm get-parameter --name "/shared-infra/deployment-bucket-name" --query "Parameter.Value" --output text)
+        aws s3 cp {{ service_name }}.zip s3://$BUCKET_NAME/{{ service_name }}/deployment.zip
+    
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: "~1.5"
+    
+    - name: Terraform Init
+      working-directory: terraform
+      run: terraform init
+    
+    - name: Terraform Plan
+      working-directory: terraform
+      run: terraform plan -no-color
+      continue-on-error: true
+    
+    - name: Terraform Apply
+      working-directory: terraform
+      if: github.ref == 'refs/heads/main'
+      run: terraform apply -auto-approve
+    
+    - name: Update Lambda function code
+      run: |
+        aws lambda update-function-code \
+          --function-name ${{ service_name }} \
+          --s3-bucket $(aws ssm get-parameter --name "/shared-infra/deployment-bucket-name" --query "Parameter.Value" --output text) \
+          --s3-key {{ service_name }}/deployment.zip

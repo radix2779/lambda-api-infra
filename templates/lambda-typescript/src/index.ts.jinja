@@ -1,0 +1,159 @@
+import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
+
+interface LambdaResponse {
+  statusCode: number;
+  headers?: Record<string, string>;
+  body: string;
+}
+
+{% if enable_api_gateway %}
+/**
+ * API Gateway Lambda handler
+ */
+export const handler = async (
+  event: APIGatewayProxyEvent,
+  context: Context
+): Promise<APIGatewayProxyResult> => {
+  console.log('Event:', JSON.stringify(event, null, 2));
+  console.log('Context:', JSON.stringify(context, null, 2));
+
+  try {
+    const { httpMethod, path, pathParameters, queryStringParameters, body } = event;
+
+    // Basic routing based on HTTP method
+    switch (httpMethod) {
+      case 'GET':
+        return handleGet(pathParameters, queryStringParameters);
+      case 'POST':
+        return handlePost(body);
+      case 'PUT':
+        return handlePut(pathParameters, body);
+      case 'DELETE':
+        return handleDelete(pathParameters);
+      default:
+        return createResponse(405, { error: 'Method not allowed' });
+    }
+  } catch (error) {
+    console.error('Error processing request:', error);
+    return createResponse(500, { error: 'Internal server error' });
+  }
+};
+
+/**
+ * Handle GET requests
+ */
+const handleGet = async (
+  pathParameters: Record<string, string> | null,
+  queryStringParameters: Record<string, string> | null
+): Promise<APIGatewayProxyResult> => {
+  return createResponse(200, {
+    message: 'Hello from {{ service_name }}!',
+    service: '{{ service_name }}',
+    method: 'GET',
+    timestamp: new Date().toISOString(),
+    pathParameters,
+    queryStringParameters
+  });
+};
+
+/**
+ * Handle POST requests
+ */
+const handlePost = async (body: string | null): Promise<APIGatewayProxyResult> => {
+  const data = body ? JSON.parse(body) : {};
+  
+  return createResponse(201, {
+    message: 'Resource created',
+    service: '{{ service_name }}',
+    method: 'POST',
+    timestamp: new Date().toISOString(),
+    data
+  });
+};
+
+/**
+ * Handle PUT requests
+ */
+const handlePut = async (
+  pathParameters: Record<string, string> | null,
+  body: string | null
+): Promise<APIGatewayProxyResult> => {
+  const data = body ? JSON.parse(body) : {};
+  
+  return createResponse(200, {
+    message: 'Resource updated',
+    service: '{{ service_name }}',
+    method: 'PUT',
+    timestamp: new Date().toISOString(),
+    pathParameters,
+    data
+  });
+};
+
+/**
+ * Handle DELETE requests
+ */
+const handleDelete = async (
+  pathParameters: Record<string, string> | null
+): Promise<APIGatewayProxyResult> => {
+  return createResponse(200, {
+    message: 'Resource deleted',
+    service: '{{ service_name }}',
+    method: 'DELETE',
+    timestamp: new Date().toISOString(),
+    pathParameters
+  });
+};
+
+/**
+ * Create standardized API response
+ */
+const createResponse = (statusCode: number, data: any): APIGatewayProxyResult => {
+  return {
+    statusCode,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+      'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
+    },
+    body: JSON.stringify(data)
+  };
+};
+{% else %}
+/**
+ * Direct Lambda invocation handler
+ */
+export const handler = async (event: any, context: Context): Promise<any> => {
+  console.log('Event:', JSON.stringify(event, null, 2));
+  console.log('Context:', JSON.stringify(context, null, 2));
+
+  try {
+    // Process the event
+    const result = await processEvent(event);
+    
+    return {
+      statusCode: 200,
+      message: 'Success',
+      service: '{{ service_name }}',
+      timestamp: new Date().toISOString(),
+      result
+    };
+  } catch (error) {
+    console.error('Error processing event:', error);
+    throw error;
+  }
+};
+
+/**
+ * Process the incoming event
+ */
+const processEvent = async (event: any): Promise<any> => {
+  // Add your business logic here
+  return {
+    processed: true,
+    eventType: typeof event,
+    eventKeys: Object.keys(event || {})
+  };
+};
+{% endif %}

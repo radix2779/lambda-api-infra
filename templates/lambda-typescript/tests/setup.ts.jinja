@@ -1,0 +1,12 @@
+{% if include_tests %}// Jest setup file
+// Add any global test setup here
+
+// Mock AWS SDK if needed
+jest.mock('aws-sdk', () => ({
+  // Add AWS SDK mocks here
+}));
+
+// Set environment variables for testing
+process.env.AWS_REGION = '{{ aws_region }}';
+process.env.NODE_ENV = 'test';
+{% endif %}

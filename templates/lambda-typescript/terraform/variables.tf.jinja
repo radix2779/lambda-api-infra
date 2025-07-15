@@ -1,0 +1,74 @@
+variable "aws_region" {
+  description = "AWS region"
+  type        = string
+  default     = "{{ aws_region }}"
+}
+
+variable "environment" {
+  description = "Environment name"
+  type        = string
+  default     = "dev"
+}
+
+variable "lambda_function_name" {
+  description = "Name of the Lambda function"
+  type        = string
+  default     = "{{ service_name }}"
+}
+
+variable "lambda_runtime" {
+  description = "Lambda runtime"
+  type        = string
+  default     = "{{ lambda_runtime }}"
+}
+
+variable "lambda_timeout" {
+  description = "Lambda timeout in seconds"
+  type        = number
+  default     = {{ lambda_timeout }}
+}
+
+variable "lambda_memory" {
+  description = "Lambda memory allocation in MB"
+  type        = number
+  default     = {{ lambda_memory }}
+}
+
+variable "shared_infra_state_bucket" {
+  description = "S3 bucket containing shared infrastructure state"
+  type        = string
+  default     = "{{ shared_infra_state_bucket }}"
+}
+
+variable "shared_infra_state_key" {
+  description = "State key for shared infrastructure"
+  type        = string
+  default     = "{{ shared_infra_state_key }}"
+}
+
+variable "log_retention_days" {
+  description = "CloudWatch log retention in days"
+  type        = number
+  default     = 14
+}
+
+{% if enable_api_gateway %}variable "api_path_part" {
+  description = "API Gateway path part"
+  type        = string
+  default     = "{{ api_path.lstrip('/') }}"
+}
+
+variable "api_stage_name" {
+  description = "API Gateway stage name"
+  type        = string
+  default     = "prod"
+}
+{% endif %}
+{% if environment_variables %}
+# Environment variables
+{% for env_var in environment_variables.split(',') %}{% if env_var.strip() %}variable "{{ env_var.strip().lower() }}" {
+  description = "{{ env_var.strip() }} environment variable"
+  type        = string
+  default     = ""
+}
+{% endif %}{% endfor %}{% endif %}

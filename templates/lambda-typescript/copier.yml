@@ -1,0 +1,129 @@
+_tasks:
+  - make install
+  - make lint
+  - make test
+_templates_suffix: .jinja
+_envops:
+  block_start_string: "{%"
+  block_end_string: "%}"
+  variable_start_string: "{{"
+  variable_end_string: "}}"
+
+# Project metadata
+service_name:
+  type: str
+  help: "Lambda service name (e.g., user-service, order-processor)"
+  validator: >-
+    {% if not (service_name | regex_search('^[a-z][a-z0-9-]*[a-z0-9]$')) %}
+    Service name must be lowercase, start with a letter, and contain only letters, numbers, and hyphens
+    {% endif %}
+
+service_description:
+  type: str
+  help: "Brief description of the Lambda service"
+  default: "A serverless Lambda function built with TypeScript"
+
+# Infrastructure settings
+aws_region:
+  type: str
+  help: "AWS region for deployment"
+  default: "us-east-1"
+  choices:
+    - us-east-1
+    - us-west-2
+    - eu-west-1
+    - ap-southeast-1
+
+shared_infra_state_bucket:
+  type: str
+  help: "S3 bucket containing the shared infrastructure Terraform state"
+  validator: >-
+    {% if not (shared_infra_state_bucket | regex_search('^[a-z0-9][a-z0-9.-]*[a-z0-9]$')) %}
+    Invalid S3 bucket name format
+    {% endif %}
+
+shared_infra_state_key:
+  type: str
+  help: "State key for shared infrastructure"
+  default: "shared-infra/terraform.tfstate"
+
+# GitHub settings
+github_org:
+  type: str
+  help: "GitHub organization name"
+
+github_repo:
+  type: str
+  help: "GitHub repository name"
+  default: "{{ service_name }}"
+
+aws_role_arn:
+  type: str
+  help: "GitHub Actions AWS role ARN from shared infrastructure"
+  validator: >-
+    {% if not (aws_role_arn | regex_search('^arn:aws:iam::[0-9]{12}:role/')) %}
+    Must be a valid IAM role ARN
+    {% endif %}
+
+# Lambda configuration
+lambda_runtime:
+  type: str
+  help: "Node.js runtime version"
+  default: "nodejs20.x"
+  choices:
+    - nodejs18.x
+    - nodejs20.x
+
+lambda_memory:
+  type: int
+  help: "Lambda memory allocation (MB)"
+  default: 256
+  validator: >-
+    {% if lambda_memory < 128 or lambda_memory > 10240 %}
+    Memory must be between 128 and 10240 MB
+    {% endif %}
+
+lambda_timeout:
+  type: int
+  help: "Lambda timeout (seconds)"
+  default: 30
+  validator: >-
+    {% if lambda_timeout < 1 or lambda_timeout > 900 %}
+    Timeout must be between 1 and 900 seconds
+    {% endif %}
+
+# API Gateway integration
+enable_api_gateway:
+  type: bool
+  help: "Create API Gateway integration?"
+  default: true
+
+api_path:
+  type: str
+  help: "API Gateway path (e.g., /users, /orders)"
+  default: "/{{ service_name }}"
+  when: "{{ enable_api_gateway }}"
+
+# Environment variables
+environment_variables:
+  type: str
+  help: "Comma-separated list of environment variable names (e.g., DATABASE_URL,API_KEY)"
+  default: ""
+
+# Development preferences
+include_tests:
+  type: bool
+  help: "Include Jest testing setup?"
+  default: true
+
+include_eslint:
+  type: bool
+  help: "Include ESLint configuration?"
+  default: true
+
+include_prettier:
+  type: bool
+  help: "Include Prettier configuration?"
+  default: true
+# Computed values
+# _subdirectory: lambda-typescript
