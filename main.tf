@@ -1,6 +1,8 @@
 variable "project_prefix" {}
 variable "region" {}
 variable "account_id" {}
+variable "source_dir" {}
+variable "output_path" {}
 
 terraform {
   required_version = ">= 1.0"
@@ -28,17 +30,17 @@ provider "aws" {
 }
 
 
-data "archive_file" "lambda_json" {
+data "archive_file" "lambda_function_zip" {
   type        = "zip"
-  source_dir  = "${path.module}/src/lambda_json"
-  output_path = "${path.module}/_build/lambda_json.zip"
+  source_dir  = var.source_dir
+  output_path = var.output_path
 }
 
 
 module "lambdas" {
   source           = "./lambdas"
-  lambda_filename  = data.archive_file.lambda_json.output_path
-  lambda_json_hash = data.archive_file.lambda_json.output_base64sha256
+  lambda_filename  = data.archive_file.lambda_function_zip.output_path
+  lambda_json_hash = data.archive_file.lambda_function_zip.output_base64sha256
   project_prefix   = var.project_prefix
 }
 
