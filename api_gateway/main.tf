@@ -3,6 +3,7 @@ variable "account_id" {}
 variable "lambda_json_invoke_arn" {}
 variable "lambda_json_function_name" {}
 variable "project_prefix" {}
+variable "api_path" {}
 
 
 # https://www.terraform.io/docs/providers/aws/r/api_gateway_rest_api.html
@@ -15,7 +16,7 @@ resource "aws_api_gateway_rest_api" "example_api" {
 resource "aws_api_gateway_resource" "api_resource" {
   rest_api_id = aws_api_gateway_rest_api.example_api.id
   parent_id   = aws_api_gateway_rest_api.example_api.root_resource_id
-  path_part   = "helloworld"
+  path_part   = var.api_path
 }
 
 resource "aws_api_gateway_method" "api_method" {

@@ -23,8 +23,8 @@ EOF
 }
 
 # https://www.terraform.io/docs/providers/aws/r/lambda_function.html
-resource "aws_lambda_function" "example_json_lambda" {
-  function_name    = "exampleLambdaJson"
+resource "aws_lambda_function" "lambda_function" {
+  function_name    = var.project_prefix
   role             = aws_iam_role.lambda.arn
   handler          = "index.handler"
   runtime          = "nodejs22.x"
@@ -39,20 +39,20 @@ resource "aws_lambda_function" "example_json_lambda" {
 }
 
 # lambda logging
-resource "aws_cloudwatch_log_group" "test_lambda" {
-  name              = "/aws/lambda/${aws_lambda_function.example_json_lambda.function_name}"
+resource "aws_cloudwatch_log_group" "lambda_log_group" {
+  name              = "/aws/lambda/${aws_lambda_function.lambda_function.function_name}"
   retention_in_days = 3
 }
 
 # OUTPUTS
 
 output "lambda_json_invoke_arn" {
-  value = aws_lambda_function.example_json_lambda.invoke_arn
+  value = aws_lambda_function.lambda_function.invoke_arn
 }
 output "lambda_json_function_name" {
-  value = aws_lambda_function.example_json_lambda.function_name
+  value = aws_lambda_function.lambda_function.function_name
 }
 
 output "lambda_json_qualified_arn" {
-  value = aws_lambda_function.example_json_lambda.qualified_arn
+  value = aws_lambda_function.lambda_function.qualified_arn
 }

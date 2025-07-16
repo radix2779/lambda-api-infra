@@ -3,6 +3,7 @@ variable "region" {}
 variable "account_id" {}
 variable "source_dir" {}
 variable "output_path" {}
+variable "api_path" {}
 
 terraform {
   required_version = ">= 1.0"
