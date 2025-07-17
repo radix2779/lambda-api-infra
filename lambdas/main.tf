@@ -3,7 +3,7 @@ variable "lambda_json_hash" {}
 variable "project_prefix" {}
 
 resource "aws_iam_role" "lambda" {
-  name = "${var.project_prefix}-iam-role"
+  name = "${var.project_prefix}-iam-role-tf"
 
   assume_role_policy = <<EOF
 {

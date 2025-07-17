@@ -52,5 +52,6 @@ module "api_gateway" {
   lambda_json_invoke_arn    = module.lambdas.lambda_json_invoke_arn
   lambda_json_function_name = module.lambdas.lambda_json_function_name
   project_prefix            = var.project_prefix
+  api_path                  = var.api_path
 }
 
