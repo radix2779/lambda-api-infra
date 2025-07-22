@@ -17,18 +17,11 @@ terraform {
       version = "~> 2.0"
     }
   }
-
-  # backend "s3" {
-  #   bucket         = "my-terraform-state-bucket"
-  #   key            = "terraform/state"
-  #   region         = "ap-south-1"
-  #   dynamodb_table = "terraform-lock-table"
-  # }
 }
 
-provider "aws" {
-  region = "ap-south-1"
-}
+# provider "aws" {
+#   region = var.region
+# }
 
 
 data "archive_file" "lambda_function_zip" {
