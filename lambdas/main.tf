@@ -1,9 +1,10 @@
 variable "lambda_filename" {}
 variable "lambda_json_hash" {}
 variable "project_prefix" {}
+variable "region" {}
 
 resource "aws_iam_role" "lambda" {
-  name = "${var.project_prefix}-iam-role-tf"
+  name = "${var.project_prefix}-${var.region}-iam-role-tf"
 
   assume_role_policy = <<EOF
 {
@@ -40,7 +41,7 @@ resource "aws_lambda_function" "lambda_function" {
 
 # lambda logging
 resource "aws_cloudwatch_log_group" "lambda_log_group" {
-  name              = "/aws/lambda/${aws_lambda_function.lambda_function.function_name}"
+  name              = "/aws/lambda/${var.region}/${aws_lambda_function.lambda_function.function_name}"
   retention_in_days = 3
 }
 

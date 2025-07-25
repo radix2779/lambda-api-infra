@@ -19,11 +19,6 @@ terraform {
   }
 }
 
-# provider "aws" {
-#   region = var.region
-# }
-
-
 data "archive_file" "lambda_function_zip" {
   type        = "zip"
   source_dir  = var.source_dir
@@ -36,6 +31,7 @@ module "lambdas" {
   lambda_filename  = data.archive_file.lambda_function_zip.output_path
   lambda_json_hash = data.archive_file.lambda_function_zip.output_base64sha256
   project_prefix   = var.project_prefix
+  region           = var.region
 }
 
 module "api_gateway" {
